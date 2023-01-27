@@ -4,9 +4,11 @@ export const useSocketStore = defineStore('user', () => {
 
     const socket = ref('' as any);
     const nickname = ref('');
+    const online = ref(true);
 
     const socketVal = computed(() => socket.value);
     const nicknameVal = computed(() => nickname.value);
+    const isOnline = computed(() => online.value);
 
     function setSocket(_socket: any) {
         socket.value = _socket;
@@ -20,5 +22,13 @@ export const useSocketStore = defineStore('user', () => {
         socket.value.emit('setNickname', _nickname);
     }
 
-    return { socketVal, nicknameVal, setNickname, setSocket, emitNickname }
+    function disconnect() {
+        online.value = false;
+    }
+
+    function connect() {
+        online.value = true;
+    }
+
+    return { socketVal, nicknameVal, setNickname, setSocket, emitNickname, disconnect, connect, isOnline }
 })

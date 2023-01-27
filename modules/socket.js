@@ -40,13 +40,13 @@ export default defineNuxtModule({
           socket.broadcast.emit('message', { msg: `activity`, nickname: userMap[socket.id].nickname, type});
         })
 
-        socket.on("disconnecting", () => {
+        socket.on('left', (type) => {
           userMap[socket.id].connected = false;
           socket.broadcast.emit(
             "message",
-            buildMessage(socket, `${socket.id} left`, userMap[socket.id].nickname)
+            buildMessage(socket, `${socket.id} left`, userMap[socket.id].nickname, 'left')
           );
-        });
+        })
       });
     });
   },

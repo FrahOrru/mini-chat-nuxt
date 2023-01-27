@@ -9,14 +9,14 @@
   const nickname = ref("");
   const imageInput = ref('')
 
-  const { socketVal, nicknameVal, setSocket, emitNickname} = useSocketStore();
+  const { socketVal, nicknameVal, setSocket, emitNickname, disconnect, connect, isOnline} = useSocketStore();
 
   const { escape } = useMagicKeys()
 
   let socket;
   function addToChat(m, n = nicknameVal, activityMessage = false, isConnected, isLink, img) {
     if(!activityMessage) {
-      chatLog.value.push({ nickname: n, message: m, isConnected: isConnected, acivity: false, isLink: isLink, img: img});
+      chatLog.value.push({ nickname: n, message: m, isConnected: isOnline, acivity: false, isLink: isLink, img: img});
     } else {
       chatLog.value.push({ message: m, acivity: true });
     }
@@ -27,6 +27,7 @@
     socket = io(config.public.wssUrl); // "http://192.168.20.31:3000");
     setSocket(socket);
     emitNickname(nicknameVal);
+    connect();
 
     socket.on("chat message", (data) => {
       addToChat(data.msg, data.nickname, false, data.connected, data.isLink, data.img);
@@ -38,6 +39,9 @@
           case 'joined': 
             addToChat(`${ data.nickname === nicknameVal ? 'you' : data.nickname } joined`, data.nickname, true);
           break;
+          case 'left': 
+            addToChat(`${ data.nickname === nicknameVal ? 'you' : data.nickname } left`, data.nickname, true);
+            break;
           case 'typing':
             if(!chatLog.value.find(item => item.id === 'loading')) {
               chatLog.value.push({id: 'loading', nickname: nicknameVal});
@@ -50,11 +54,6 @@
       }
     })
   });
-
-  onBeforeUnmount(() => {
-    socket.emit('disconnecting');
-    connect(false);
-  })
 
   function onFocus() {
     socket.emit('activity', 'typing');
@@ -80,7 +79,7 @@
 
       socket.emit("chat message", image, false, true)
       // { nickname: n, message: m, isConnected: isConnected, acivity: false, isLink: isLink, img: img}
-      chatLog.value.push({ nickname: nicknameVal, message: image, isConnected: true, acivity: false, isLink: false, img: true});
+      chatLog.value.push({ nickname: nicknameVal, message: image, isConnected: isOnline, acivity: false, isLink: false, img: true});
     }
 
   function send() {
@@ -90,6 +89,8 @@
     text.value = "";
   }
   watch(escape, () => {
+    socket.emit('left');
+    disconnect();
     navigateTo({ path: '/' });
   })
 </script>
